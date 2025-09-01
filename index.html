@@ -1,0 +1,91 @@
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador Léxico</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; }
+        textarea { width: 400px; }
+        table { border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #888; padding: 4px 10px; text-align: center; }
+        th { background: #e0e0e0; }
+    </style>
+</head>
+<body>
+    <h1>Analizador Léxico</h1>
+    <textarea id="input" rows="4" cols="50" placeholder="Introduce el texto a analizar..."></textarea><br>
+    <button onclick="analizar()">Analizar</button>
+    <div id="resultado"></div>
+    <script>
+        // Función para analizar el texto
+        function analizar() {
+            const texto = document.getElementById('input').value;
+            const tokens = [];
+            const tabla = [];
+            let i = 0;
+            // Tabla de pasos para mostrar el análisis
+            const pasos = [];
+            while (i < texto.length) {
+                let c = texto[i];
+                if (/[ \t\n]/.test(c)) {
+                    pasos.push([i, c, 'Ignorar espacio']);
+                    i++;
+                    continue;
+                }
+                // Identificador: letra(letra|digito)*
+                if (/[a-zA-Z]/.test(c)) {
+                    let start = i;
+                    i++;
+                    while (i < texto.length && /[a-zA-Z0-9]/.test(texto[i])) i++;
+                    let lexema = texto.slice(start, i);
+                    tokens.push({ tipo: 'Identificador', valor: lexema });
+                    tabla.push([lexema, 'Identificador']);
+                    pasos.push([start, lexema, 'Reconoce Identificador']);
+                    continue;
+                }
+                // Real: entero.entero+
+                if (/[0-9]/.test(c)) {
+                    let start = i;
+                    while (i < texto.length && /[0-9]/.test(texto[i])) i++;
+                    if (texto[i] === '.' && /[0-9]/.test(texto[i+1])) {
+                        i++;
+                        let decStart = i;
+                        while (i < texto.length && /[0-9]/.test(texto[i])) i++;
+                        if (i > decStart) {
+                            let lexema = texto.slice(start, i);
+                            tokens.push({ tipo: 'Real', valor: lexema });
+                            tabla.push([lexema, 'Real']);
+                            pasos.push([start, lexema, 'Reconoce Real']);
+                            continue;
+                        }
+                    }
+                    // Si no es real, solo entero (no lo reconocemos)
+                    pasos.push([start, texto.slice(start, i), 'No es real, ignorar']);
+                    i = start + 1;
+                    continue;
+                }
+                // Otro carácter
+                tabla.push([c, 'Desconocido']);
+                pasos.push([i, c, 'Desconocido']);
+                i++;
+            }
+
+            // Mostrar tabla de tokens
+            let html = '<h2>Tabla de Tokens</h2><table><tr><th>Lexema</th><th>Token</th></tr>';
+            for (const fila of tabla) {
+                html += `<tr><td>${fila[0]}</td><td>${fila[1]}</td></tr>`;
+            }
+            html += '</table>';
+
+            // Análisis paso a paso
+            html += '<h2>Análisis Paso a Paso</h2><table><tr><th>Paso</th><th>Posición</th><th>Lexema/Carácter</th><th>Acción</th></tr>';
+            pasos.forEach((p, idx) => {
+                html += `<tr><td>${idx+1}</td><td>${p[0]}</td><td>${p[1]}</td><td>${p[2]}</td></tr>`;
+            });
+            html += '</table>';
+
+            document.getElementById('resultado').innerHTML = html;
+        }
+    </script>
+</body>
+</html>
